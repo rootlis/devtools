@@ -27,14 +27,14 @@ export BUILDTOOLVER=@buildtoolver@
 
 # Set common properties
 export PACMAN_KEYRING_DIR=/etc/pacman.d/gnupg
-export GITLAB_HOST=gitlab.archlinux.org
+export GITLAB_HOST=gitlab.rootless.net
 export GIT_REPO_SPEC_VERSION=2
 export GIT_PACKAGING_NAMESPACE=archlinux/packaging/packages
 export GIT_PACKAGING_NAMESPACE_ID=11323
 export GIT_PACKAGING_URL_SSH="git@${GITLAB_HOST}:${GIT_PACKAGING_NAMESPACE}"
 export GIT_PACKAGING_URL_HTTPS="https://${GITLAB_HOST}/${GIT_PACKAGING_NAMESPACE}"
-export PACKAGING_REPO_RELEASE_HOST=repos.archlinux.org
-export PKGBASE_MAINTAINER_URL=https://archlinux.org/packages/pkgbase-maintainer
+export PACKAGING_REPO_RELEASE_HOST=repos.rootless.net
+export PKGBASE_MAINTAINER_URL=https://www.rootless.net/packages/pkgbase-maintainer
 export AUR_URL_SSH=aur@aur.archlinux.org
 
 # Create or reuse a shared SSH control socket with ControlMaster=auto. The
