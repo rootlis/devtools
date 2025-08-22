@@ -31,7 +31,10 @@ COMMITPKG_LINKS = \
 	multilib-testingpkg \
 	multilib-stagingpkg \
 	kde-unstablepkg \
-	gnome-unstablepkg
+	gnome-unstablepkg \
+	pacbrewpkg \
+	pacbrew-testingpkg \
+	pacbrew-stagingpkg
 
 ARCHBUILD_LINKS = \
 	core-testing-x86_64-build \
@@ -48,7 +51,10 @@ ARCHBUILD_LINKS = \
 	multilib-testing-build \
 	multilib-staging-build \
 	kde-unstable-x86_64-build \
-	gnome-unstable-x86_64-build
+	gnome-unstable-x86_64-build \
+	pacbrew-x86_64-build \
+	pacbrew-testing-x86_64-build \
+	pacbrew-staging-x86_64-build
 
 COMPLETIONS = $(addprefix $(BUILDDIR)/,$(patsubst %.in,%,$(wildcard contrib/completion/*/*)))
 
