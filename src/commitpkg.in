@@ -277,10 +277,6 @@ for _arch in "${arch[@]}"; do
 	fi
 done
 
-if [[ ${#commit_arches[*]} -gt 0 ]]; then
-	archrelease "${archreleaseopts[@]}" "${commit_arches[@]/#/$repo-}" || die
-fi
-
 if [[ ${#uploads[*]} -gt 0 ]]; then
 	new_uploads=()
 
