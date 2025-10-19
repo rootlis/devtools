@@ -10,6 +10,7 @@ DEVTOOLS_VALID_REPOS=(
 	multilib multilib-staging multilib-testing
 	gnome-unstable
 	kde-unstable
+	pacbrew pacbrew-staging pacbrew-testing
 )
 
 # shellcheck disable=2034
@@ -19,4 +20,5 @@ DEVTOOLS_VALID_BUILDREPOS=(
 	multilib multilib-staging multilib-testing
 	gnome-unstable
 	kde-unstable
+	pacbrew pacbrew-staging pacbrew-testing
 )

@@ -27,4 +27,7 @@ DEVTOOLS_VALID_TAGS=(
 	multilib-staging-x86_64
 	kde-unstable-x86_64 kde-unstable-any
 	gnome-unstable-x86_64 gnome-unstable-any
+	pacbrew-x86_64 pacbrew-any
+	pacbrew-staging-x86_64 pacbrew-staging-any
+	pacbrew-testing-x86_64 pacbrew-testing-any
 )
