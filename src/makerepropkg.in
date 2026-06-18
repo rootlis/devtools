@@ -19,7 +19,7 @@ source /usr/share/makepkg/util/message.sh
 declare -A buildinfo
 declare -a buildenv buildopts installed installpkgs
 
-archiveurl='https://archive.rootless.net/packages'
+archiveurl='https://archive.archlinux.org/packages'
 buildroot=/var/lib/archbuild/reproducible
 diffoscope=0
 makepkg_options=()

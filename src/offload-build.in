@@ -22,7 +22,7 @@ fi
 # global defaults suitable for use by Arch staff
 repo=extra
 arch=x86_64
-server=build.rootless.net
+server=build.archlinux.org
 
 usage() {
     cat <<- _EOF_
