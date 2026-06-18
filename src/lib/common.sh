@@ -33,7 +33,7 @@ export GIT_PACKAGING_NAMESPACE=archlinux/packaging/packages
 export GIT_PACKAGING_NAMESPACE_ID=11323
 export GIT_PACKAGING_URL_SSH="git@${GITLAB_HOST}:${GIT_PACKAGING_NAMESPACE}"
 export GIT_PACKAGING_URL_HTTPS="https://${GITLAB_HOST}/${GIT_PACKAGING_NAMESPACE}"
-export PACKAGING_REPO_RELEASE_HOST=repos.archlinux.org
+export PACKAGING_REPO_RELEASE_HOST=repos.rootless.net
 export PKGBASE_MAINTAINER_URL=https://archlinux.org/packages/pkgbase-maintainer
 export AUR_URL_SSH=aur@aur.archlinux.org
 
