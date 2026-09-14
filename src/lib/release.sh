@@ -118,6 +118,7 @@ pkgctl_release() {
 	done
 
 	# Resolve package from current working directory
+	# This is going to be a problem for pacbrew
 	if (( 0 == ${#PKGBASES[@]} )); then
 		PKGBASES=("$PWD")
 	fi
