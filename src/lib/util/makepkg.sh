@@ -17,8 +17,10 @@ set -e
 makepkg_source_package() {
 	if (( EUID != 0 )); then
 		[[ -z ${WORKDIR:-} ]] && setup_workdir
-		export WORKDIR DEVTOOLS_INCLUDE_COMMON_SH
-		fakeroot -- bash -$- -c "source '${BASH_SOURCE[0]}' && ${FUNCNAME[0]}"
+		(
+			export WORKDIR DEVTOOLS_INCLUDE_COMMON_SH SRCPKGDEST
+			fakeroot -- bash -$- -c "source '${BASH_SOURCE[0]}' && ${FUNCNAME[0]}"
+		)
 		return
 	fi
 	(
@@ -54,4 +56,16 @@ makepkg_generate_integrity() {
 		# shellcheck source=/usr/bin/makepkg
 		source "$(command -v makepkg)"
 	)
+}
+
+# Load makepkg.conf once to make variables available
+_makepkg_config_loaded=false
+makepkg_load_config() {
+	if $_makepkg_config_loaded; then
+		return
+	fi
+	_makepkg_config_loaded=true
+	source /usr/share/makepkg/util/config.sh
+	# shellcheck disable=2119
+	load_makepkg_config
 }

@@ -1,4 +1,4 @@
-#compdef archbuild arch-nspawn archrelease commitpkg pkgctl diffpkg finddeps makechrootpkg mkarchroot extrapkg=commitpkg corepkg=commitpkg testingpkg=commitpkg stagingpkg=commitpkg communitypkg=commitpkg community-testingpkg=commitpkg community-stagingpkg=commitpkg multilibpkg=commitpkg multilib-testingpkg=commitpkg extra-x86_64-build=archbuild testing-x86_64-build=archbuild staging-x86_64-build=archbuild multilib-build=archbuild multilib-testing-build=archbuild multilib-staging-build=archbuild kde-unstable-x86_64-build=archbuild gnome-unstable-x86_64-build=archbuild checkpkg sogrep offload-build makerepropkg
+#compdef archbuild arch-nspawn archrelease commitpkg pkgctl diffpkg finddeps makechrootpkg mkarchroot extrapkg=commitpkg corepkg=commitpkg testingpkg=commitpkg stagingpkg=commitpkg communitypkg=commitpkg community-testingpkg=commitpkg community-stagingpkg=commitpkg multilibpkg=commitpkg multilib-testingpkg=commitpkg extra-x86_64-build=archbuild testing-x86_64-build=archbuild staging-x86_64-build=archbuild multilib-build=archbuild multilib-testing-build=archbuild multilib-staging-build=archbuild kde-unstable-x86_64-build=archbuild gnome-unstable-x86_64-build=archbuild checkpkg sogrep makerepropkg
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -49,6 +49,7 @@ _pkgctl_build_args=(
 	'(-s --staging)'{-s,--staging}'[Build against the staging counterpart of the auto-detected repo]'
 	'(-t --testing)'{-t,--testing}'[Build against the testing counterpart of the auto-detected repo]'
 	'(-o --offload)'{-o,--offload}'[Build on a remote server and transfer artifacts afterwards]'
+	"--offload-host[Specify an alternative offload host (default: build.archlinux.org)]:host:"
 	'(-c --clean)'{-c,--clean}'[Recreate the chroot before building]'
 	"--inspect[Spawn an interactive shell to inspect the chroot (never, always, failure)]:inspect:($DEVTOOLS_VALID_INSPECT_MODES[*])"
 	'*'{-I,--install-to-chroot}'[Install a package to the working copy of the chroot]:target:_files -g "*.pkg.tar.*(.)"'
@@ -159,6 +160,7 @@ _pkgctl_issue_list_args=(
 	'(-A --all)'{-A,--all}'[Get all issues including closed]'
 	'(-c --closed)'{-c,--closed}'[Get only closed issues]'
 	'(-U --unconfirmed)'{-U,--unconfirmed}'[Shorthand to filter by unconfirmed status label]'
+	'(-l --label)'{-l,--label}'[Filter issue by label]:name:'
 	'--search[Search in the fields defined by --in]:search:'
 	"--in[Search in title or description]:location:($DEVTOOLS_VALID_ISSUE_SEARCH_LOCATION[*])"
 	"--confidentiality[Filter by confidentiality]:confidential:($DEVTOOLS_VALID_ISSUE_CONFIDENTIALITY[*])"
@@ -312,7 +314,7 @@ _diffpkg_args=(
 	'(-d --diffoscope)'{-d,--diffoscope}'[Diffoscope diff mode]'
 	'(-p --pkginfo)'{-p,--pkginfo}'[.PKGINFO diff mode]'
 	'(-b --buildinfo)'{-b,--buildinfo}'[.BUILDINFO diff mode]'
-	'(-m --makepkg-config)'{-m,--makepkg-config}'[Location of a makepkg config file]:makepkg_config:_files -g "*.conf(.)"'
+	'(-M --makepkg-config)'{-M,--makepkg-config}'[Location of a makepkg config file]:makepkg_config:_files -g "*.conf(.)"'
 	'(-u -U --unified)'{-u,-U,--unified}'[Output 3 lines of unified context]'
 	'(-y --side-by-side)'{-y,--side-by-side}'[Output in two columns]'
 	'--color=[Color output]:when:($_colors[*])'
@@ -367,13 +369,6 @@ _sogrep_args=(
 	'(-h --help)'{-h,--help}'[Display usage]'
 	'1:repo:(all $DEVTOOLS_VALID_REPOS[*])'
 	'2:libname'
-)
-
-_offload_build_args=(
-	'(-r --repo)'{-r,--repo}'[Build against a specific repository]:repo:($DEVTOOLS_VALID_BUILDREPOS[*])'
-	'(-a --arch)'{-a,--arch}'[Build against a specific architecture]:arch:(${DEVTOOLS_VALID_BINARY_ARCHES[*]})'
-	'(-s --server)'{-s,--server}'[Offload to a specific Build server]:server:'
-	'(-h --help)'{-h,--help}'[Display usage]'
 )
 
 _makerepropkg_args=(

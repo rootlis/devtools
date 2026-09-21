@@ -8,6 +8,8 @@ _DEVTOOLS_LIBRARY_DIR=${_DEVTOOLS_LIBRARY_DIR:-@pkgdatadir@}
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/common.sh
 # shellcheck source=src/lib/archroot.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/archroot.sh
+# shellcheck source=src/lib/util/machine.sh
+source "${_DEVTOOLS_LIBRARY_DIR}"/lib/util/machine.sh
 # shellcheck source=src/lib/valid-inspect.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/valid-inspect.sh
 
@@ -59,9 +61,9 @@ usage() {
 	echo 'command:'
 	echo '    mkarchroot <chrootdir>/root base-devel'
 	echo ''
-	echo 'This script reads {SRC,SRCPKG,PKG,LOG}DEST, MAKEFLAGS and PACKAGER'
-	echo 'from makepkg.conf(5), if those variables are not part of the'
-	echo 'environment.'
+	echo 'This script reads {SRC,SRCPKG,PKG,LOG}DEST, NPROC, MAKEFLAGS and'
+	echo 'PACKAGER from makepkg.conf(5), if those variables are not part of'
+	echo 'the environment.'
 	echo ''
 	echo "Default makepkg args: ${default_makepkg_args[*]}"
 	echo ''
@@ -150,7 +152,9 @@ install_packages() {
 	pkgnames=("${install_pkgs[@]##*/}")
 
 	cp -- "${install_pkgs[@]}" "$copydir/root/"
-	arch-nspawn "$copydir" "${bindmounts_ro[@]}" "${bindmounts_rw[@]}" "${bindmounts_tmpfs[@]}" \
+	arch-nspawn "$copydir" \
+		--machine="$(machine_name install-packages)" \
+		"${bindmounts_ro[@]}" "${bindmounts_rw[@]}" "${bindmounts_tmpfs[@]}" \
 		pacman -U --noconfirm --ask=4 -- "${pkgnames[@]/#//root/}"
 	ret=$?
 	rm -- "${pkgnames[@]/#/$copydir/root/}"
@@ -177,9 +181,10 @@ prepare_chroot() {
 
 	$install -d "$copydir"/{build,startdir,{pkg,srcpkg,src,log}dest}
 
-	sed -e '/^MAKEFLAGS=/d' -e '/^PACKAGER=/d' -i "$copydir/etc/makepkg.conf"
+	sed -e '/^NPROC=/d' -e '/^MAKEFLAGS=/d' -e '/^PACKAGER=/d' -i "$copydir/etc/makepkg.conf"
+	local nproc="${NPROC:-}" makeflags="${MAKEFLAGS:-}" packager="${PACKAGER:-}"
 	for x in BUILDDIR=/build PKGDEST=/pkgdest SRCPKGDEST=/srcpkgdest SRCDEST=/srcdest LOGDEST=/logdest \
-		"MAKEFLAGS='${MAKEFLAGS:-}'" "PACKAGER='${PACKAGER:-}'"
+		"NPROC=${nproc@Q}" "MAKEFLAGS=${makeflags@Q}" "PACKAGER=${packager@Q}"
 	do
 		grep -q "^$x" "$copydir/etc/makepkg.conf" && continue
 		echo "$x" >>"$copydir/etc/makepkg.conf"
@@ -190,7 +195,7 @@ builduser ALL = NOPASSWD: /usr/bin/pacman
 EOF
 	chmod 440 "$copydir/etc/sudoers.d/builduser-pacman"
 
-	cat > "$copydir/etc/gitconfig" <<EOF
+	tee >"$copydir/etc/gitconfig" "$copydir/etc/makepkg.d/gitconfig" <<EOF
 [safe]
 	directory = *
 EOF
@@ -316,7 +321,7 @@ done
 [[ -n $makepkg_user && -z $(id -u "$makepkg_user") ]] && die 'Invalid makepkg user.'
 makepkg_user=${makepkg_user:-${SUDO_USER:-$USER}}
 
-check_root SOURCE_DATE_EPOCH,BUILDTOOL,BUILDTOOLVER,GNUPGHOME,SRCDEST,SRCPKGDEST,PKGDEST,LOGDEST,MAKEFLAGS,PACKAGER "${BASH_SOURCE[0]}" "$@"
+check_root SOURCE_DATE_EPOCH,BUILDTOOL,BUILDTOOLVER,GNUPGHOME,SRCDEST,SRCPKGDEST,PKGDEST,LOGDEST,NPROC,MAKEFLAGS,PACKAGER "${BASH_SOURCE[0]}" "$@"
 
 # Canonicalize chrootdir, getting rid of trailing /
 chrootdir=$(readlink -e "$passeddir")
@@ -368,6 +373,7 @@ if [[ ! -d $copydir ]] || (( clean_first )); then
 fi
 
 (( update_first )) && arch-nspawn "$copydir" \
+		--machine="$(machine_name upgrade-packages)" \
 		"${bindmounts_ro[@]}" "${bindmounts_rw[@]}" "${bindmounts_tmpfs[@]}" \
 		pacman -Syuu --noconfirm
 
@@ -396,11 +402,19 @@ nspawn_build_args=(
 	"${bindmounts_tmpfs[@]}"
 )
 
+{
+	read -r -d $'\n' pkgbase
+	mapfile -t pkgnames
+} < <(sudo -u "$makepkg_user" bash -c '
+		source PKGBUILD
+		printf "%s\n" "${pkgbase:-${pkgname}}" "${pkgname[@]}"
+')
+
 if arch-nspawn "$copydir" \
 	"${nspawn_build_args[@]}" \
+	--machine="$(machine_name "${pkgbase}.build")" \
 	/chrootbuild "${makepkg_args[@]}"
 then
-	mapfile -t pkgnames < <(sudo -u "$makepkg_user" bash -c 'source PKGBUILD; printf "%s\n" "${pkgname[@]}"')
 	move_products
 else
 	(( ret += 1 ))
@@ -413,8 +427,11 @@ if [[ $inspect == always ]] || ( [[ $inspect == failure ]] && (( ret != 0 )) ); 
 	else
 		error "Build failed, inspecting %s" "$copydir"
 	fi
+	# Use a short machine name without dots so the shell picks it up
+	# as part of the window title
 	arch-nspawn "$copydir" \
 		"${nspawn_build_args[@]}" \
+		--machine="$(machine_name "${pkgbase}.inspect")" \
 		--user=builduser \
 		--chdir=/build
 fi
@@ -444,7 +461,9 @@ else
 		for remotepkg in "${remotepkgs[@]}"; do
 			if [[ $remotepkg != file://* ]]; then
 				msg2 "Downloading current versions"
-				arch-nspawn "$copydir" pacman --noconfirm -Swdd "${pkgnames[@]}"
+				arch-nspawn "$copydir" \
+					--machine="$(machine_name "${pkgbase}.checkpkg")" \
+					pacman --noconfirm -Swdd "${pkgnames[@]}"
 				mapfile -t remotepkgs < <(pacman --config "$copydir"/etc/pacman.conf \
 					--dbpath "$copydir"/var/lib/pacman \
 					-Sddp "${pkgnames[@]}")

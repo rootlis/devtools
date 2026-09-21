@@ -1,6 +1,6 @@
 SHELL=/bin/bash -o pipefail
 
-V=1.4.0
+V=1.5.1
 BUILDTOOLVER ?= $(V)
 
 PREFIX = /usr/local
@@ -62,7 +62,7 @@ COMPLETIONS = $(addprefix $(BUILDDIR)/,$(patsubst %.in,%,$(wildcard contrib/comp
 CASES ?= test/case
 JOBS ?= $(shell nproc)
 BATS_EXTRA_ARGS ?=
-BATS_ARGS ?= --jobs $(JOBS) $(BATS_EXTRA_ARGS) --verbose-run
+BATS_ARGS ?= --jobs $(JOBS) $(BATS_EXTRA_ARGS) --verbose-run --recursive
 COVERAGE_DIR ?= $(BUILDDIR)/coverage
 
 

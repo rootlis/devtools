@@ -74,16 +74,18 @@ while getopts 'hcr:' arg; do
 	esac
 done
 
-check_root SOURCE_DATE_EPOCH,SRCDEST,SRCPKGDEST,PKGDEST,LOGDEST,MAKEFLAGS,PACKAGER,GNUPGHOME "${BASH_SOURCE[0]}" "$@"
+check_root SOURCE_DATE_EPOCH,SRCDEST,SRCPKGDEST,PKGDEST,LOGDEST,NPROC,MAKEFLAGS,PACKAGER,GNUPGHOME "${BASH_SOURCE[0]}" "$@"
 
 # Pass all arguments after -- right to makepkg
 makechrootpkg_args+=("${@:$OPTIND}")
 
 # Automatically recreate the root chroot if a version mismatch is detected
-CURRENT_CHROOT_VERSION=$(cat "${chroots}/${repo}-${arch}/root/.arch-chroot")
-if [[ -f "${chroots}/${repo}-${arch}/root/.arch-chroot" ]] && [[ "$CURRENT_CHROOT_VERSION" != "$CHROOT_VERSION" ]]; then
-	warning "Recreating chroot '%s' (%s) as it is not at version %s" "${chroots}/${repo}-${arch}/root" "$CURRENT_CHROOT_VERSION" "$CHROOT_VERSION"
-	clean_first=true
+if [[ -f "${chroots}/${repo}-${arch}/root/.arch-chroot" ]]; then
+	CURRENT_CHROOT_VERSION=$(cat "${chroots}/${repo}-${arch}/root/.arch-chroot")
+	if [[ "$CURRENT_CHROOT_VERSION" != "$CHROOT_VERSION" ]]; then
+		warning "Recreating chroot '%s' (%s) as it is not at version %s" "${chroots}/${repo}-${arch}/root" "$CURRENT_CHROOT_VERSION" "$CHROOT_VERSION"
+		clean_first=true
+	fi
 fi
 
 if ${clean_first} || [[ ! -d "${chroots}/${repo}-${arch}" ]]; then

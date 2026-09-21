@@ -8,12 +8,16 @@ DEVTOOLS_INCLUDE_BUILD_SH=1
 _DEVTOOLS_LIBRARY_DIR=${_DEVTOOLS_LIBRARY_DIR:-@pkgdatadir@}
 # shellcheck source=src/lib/common.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/common.sh
+# shellcheck source=src/lib/build/offload.sh
+source "${_DEVTOOLS_LIBRARY_DIR}"/lib/build/offload.sh
 # shellcheck source=src/lib/db/update.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/db/update.sh
 # shellcheck source=src/lib/release.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/release.sh
 # shellcheck source=src/lib/util/git.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/util/git.sh
+# shellcheck source=src/lib/util/makepkg.sh
+source "${_DEVTOOLS_LIBRARY_DIR}"/lib/util/makepkg.sh
 # shellcheck source=src/lib/util/srcinfo.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/util/srcinfo.sh
 # shellcheck source=src/lib/util/pacman.sh
@@ -29,7 +33,6 @@ source "${_DEVTOOLS_LIBRARY_DIR}"/lib/valid-tags.sh
 # shellcheck source=src/lib/valid-inspect.sh
 source "${_DEVTOOLS_LIBRARY_DIR}"/lib/valid-inspect.sh
 
-source /usr/share/makepkg/util/config.sh
 source /usr/share/makepkg/util/message.sh
 
 set -eo pipefail
@@ -53,6 +56,7 @@ pkgctl_build_usage() {
 		    -s, --staging        Build against the staging counterpart of the auto-detected repo
 		    -t, --testing        Build against the testing counterpart of the auto-detected repo
 		    -o, --offload        Build on a remote server and transfer artifacts afterwards
+		    --offload-host HOST  Specify offload target machine (default: build.archlinux.org)
 		    -c, --clean          Recreate the chroot before building
 		    --inspect WHEN       Spawn an interactive shell to inspect the chroot (never, always, failure)
 		    -w, --worker SLOT    Name of the worker slot, useful for concurrent builds (disables automatic names)
@@ -119,6 +123,7 @@ pkgctl_build() {
 	local EDIT=0
 	local REBUILD=0
 	local OFFLOAD=0
+	local OFFLOAD_HOST=build.archlinux.org
 	local STAGING=0
 	local TESTING=0
 	local RELEASE=0
@@ -165,7 +170,7 @@ pkgctl_build() {
 					BUILD_ARCH=("${DEVTOOLS_VALID_ARCHES[0]}")
 				elif ! in_array "${2}" "${BUILD_ARCH[@]}"; then
 					if ! in_array "${2}" "${DEVTOOLS_VALID_ARCHES[@]}"; then
-						die 'invalid architecture: %s' "${2}"
+						warning 'invalid architecture: %s' "${2}"
 					fi
 					BUILD_ARCH+=("${2}")
 				fi
@@ -201,6 +206,11 @@ pkgctl_build() {
 			-o|--offload)
 				OFFLOAD=1
 				shift
+				;;
+			--offload-host)
+				(( $# <= 1 )) && die "missing argument for %s" "$1"
+				OFFLOAD_HOST="$2"
+				shift 2
 				;;
 			-s|--staging)
 				pkgctl_build_check_option_group_repo '--staging' "${REPO}" "${TESTING}" "${STAGING}"
@@ -463,7 +473,7 @@ pkgctl_build() {
 			fi
 
 			if (( OFFLOAD )); then
-				offload-build --repo "${pkgrepo}" -- "${BUILD_OPTIONS[@]}" -- "${MAKECHROOT_OPTIONS[@]}" -l "${WORKER}" -- "${MAKEPKG_OPTIONS[@]}"
+				pkgctl_build_offload_client "${pkgbase}" "${pkgrepo}" "${arch}" "${OFFLOAD_HOST}" "${BUILD_OPTIONS[@]}" -- "${MAKECHROOT_OPTIONS[@]}" -l "${WORKER}" -- "${MAKEPKG_OPTIONS[@]}"
 			else
 				"${BUILDTOOL}" "${BUILD_OPTIONS[@]}" -- "${MAKECHROOT_OPTIONS[@]}" -l "${WORKER}" -- "${MAKEPKG_OPTIONS[@]}"
 			fi
@@ -481,10 +491,12 @@ pkgctl_build() {
 		# shellcheck disable=SC2119
 		write_srcinfo_file
 
+		version=$(get_full_version)
+		msg "Finished building %s %s" "${pkgbase}" "${version}"
+
 		# test-install (some of) the produced packages
 		if [[ ${INSTALL_TO_HOST} == auto ]] || [[ ${INSTALL_TO_HOST} == all ]]; then
-			# shellcheck disable=2119
-			load_makepkg_config
+			makepkg_load_config
 
 			# this is inspired by print_all_package_names from libmakepkg
 			local version pkg_architecture pkg pkgfile
