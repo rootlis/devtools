@@ -3,6 +3,16 @@
 This repository contains tools for the Arch Linux distribution for building
 and maintaining official repository packages.
 
+## Branch-specific note: PacBrew Compatibility
+This work-in-progress fork of `devtools` is modified for use with
+ps5-payload-dev's
+[pacbrew-repo](https://github.com/ps5-payload-dev/pacbrew-repo) PKGBUILD
+repository. The broader goal is a minimally-patched Arch `dbscripts`
+compatible with a minimally-patched Arch `devtools` that can be used for
+self-hosted Pacman repositories.
+
+Below continues upstream's README.
+
 ## Building
 
 When building official distro packages the `BUILDTOOLVER` needs to be set to the
